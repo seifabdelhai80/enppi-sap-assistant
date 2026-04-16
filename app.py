@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import anthropic
 import os
 from datetime import datetime
@@ -16,71 +17,73 @@ st.set_page_config(
 st.markdown("""
 <style>
   [data-testid="stAppViewContainer"] { background: #0f1117; }
-  [data-testid="stSidebar"] { background: #161b27; border-right: 1px solid #1e2533; }
-  .main .block-container { padding-top: 1.5rem; max-width: 900px; }
+  [data-testid="stSidebar"] { background: #0d1117; border-right: 1px solid #1e2533; }
+  .main .block-container { padding-top: 1.2rem; max-width: 960px; }
   header[data-testid="stHeader"] { background: transparent; }
+  footer { display: none !important; }
 
   .sidebar-logo {
-    text-align: center; padding: 1rem 0 1.5rem;
+    text-align: center; padding: 1rem 0 1.4rem;
     border-bottom: 1px solid #1e2533; margin-bottom: 1rem;
   }
-  .sidebar-logo h2 { color: #e2e8f0; font-size: 1.1rem; margin: 0.3rem 0 0; font-weight: 700; }
-  .sidebar-logo p  { color: #64748b; font-size: 0.7rem; margin: 0; letter-spacing: 0.05em; text-transform: uppercase; }
+  .sidebar-logo h2 { color: #e2e8f0; font-size: 1.05rem; margin: 0.3rem 0 0; font-weight: 700; }
+  .sidebar-logo p  { color: #475569; font-size: 0.67rem; margin: 0; letter-spacing: 0.05em; text-transform: uppercase; }
 
   div[data-testid="stButton"] button {
-    width: 100%; text-align: left; border-radius: 8px;
+    width: 100%; text-align: left; border-radius: 7px;
     border: 1px solid #1e2533 !important;
-    background: #1a2035 !important; color: #94a3b8 !important;
-    padding: 0.55rem 0.9rem; font-size: 0.85rem; transition: all 0.15s;
+    background: #141921 !important; color: #94a3b8 !important;
+    padding: 0.5rem 0.85rem; font-size: 0.83rem; transition: all 0.15s;
   }
   div[data-testid="stButton"] button:hover {
-    background: #1e2a45 !important; color: #e2e8f0 !important;
-    border-color: #334155 !important;
+    background: #1a2540 !important; color: #e2e8f0 !important;
+    border-color: #2a3a55 !important;
   }
 
   .msg-user {
-    background: #1e2a3a; border: 1px solid #2a3a50;
+    background: #1a2540; border: 1px solid #2a3a55;
     border-radius: 12px 12px 2px 12px;
-    padding: 0.9rem 1.1rem; margin: 0.6rem 0; color: #e2e8f0;
-    font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap;
+    padding: 0.85rem 1rem; margin: 0.55rem 0; color: #e2e8f0;
+    font-size: 0.88rem; line-height: 1.6; white-space: pre-wrap;
   }
   .msg-assistant {
-    background: #161b27; border: 1px solid #1e2533;
+    background: #111827; border: 1px solid #1e2533;
     border-radius: 2px 12px 12px 12px;
-    padding: 0.9rem 1.1rem; margin: 0.6rem 0; color: #cbd5e1;
-    font-size: 0.9rem; line-height: 1.7;
+    padding: 0.85rem 1rem; margin: 0.55rem 0; color: #cbd5e1;
+    font-size: 0.88rem; line-height: 1.7;
   }
   .msg-label {
-    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em;
-    text-transform: uppercase; margin-bottom: 0.4rem;
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; margin-bottom: 0.35rem;
   }
-  .msg-label-user { color: #3b82f6; }
-  .msg-label-assistant { color: #10b981; }
+  .msg-label-user      { color: #60a5fa; }
+  .msg-label-assistant { color: #34d399; }
 
   .welcome-card {
-    background: #161b27; border: 1px solid #1e2533;
-    border-radius: 12px; padding: 1.8rem 2rem; margin-bottom: 1.5rem;
+    background: #111827; border: 1px solid #1e2533;
+    border-radius: 10px; padding: 1.6rem 1.8rem; margin-bottom: 1.2rem;
   }
-  .welcome-card h2 { color: #e2e8f0; font-size: 1.2rem; margin: 0 0 0.4rem; }
-  .welcome-card p  { color: #64748b; font-size: 0.87rem; margin: 0 0 1rem; }
+  .welcome-card h2 { color: #e2e8f0; font-size: 1.1rem; margin: 0 0 0.35rem; }
+  .welcome-card p  { color: #64748b; font-size: 0.85rem; margin: 0 0 0.9rem; }
 
   .sidebar-section {
-    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em;
-    text-transform: uppercase; color: #475569; margin: 1.2rem 0 0.5rem;
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.09em;
+    text-transform: uppercase; color: #334155; margin: 1rem 0 0.45rem;
   }
   .token-badge {
-    background: #1a2035; border: 1px solid #1e2533;
-    border-radius: 6px; padding: 0.35rem 0.6rem;
-    font-size: 0.75rem; color: #64748b; text-align: center; margin-top: 0.5rem;
+    background: #141921; border: 1px solid #1e2533;
+    border-radius: 5px; padding: 0.32rem 0.55rem;
+    font-size: 0.72rem; color: #64748b; text-align: center; margin-top: 0.4rem;
   }
   .stDownloadButton button {
-    width: 100%; background: #1a2035 !important;
-    border: 1px solid #2a3a50 !important; color: #94a3b8 !important;
-    border-radius: 8px !important; font-size: 0.8rem !important;
+    width: 100%; background: #141921 !important;
+    border: 1px solid #1e2533 !important; color: #64748b !important;
+    border-radius: 7px !important; font-size: 0.78rem !important;
   }
-  .stDownloadButton button:hover {
-    background: #1e2a45 !important; color: #e2e8f0 !important;
-  }
+  /* Hide Streamlit's built-in warning/info boxes */
+  [data-testid="stAlert"] { display: none !important; }
+  /* Tighten mindmap container */
+  iframe { border-radius: 8px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -100,17 +103,34 @@ if not api_key:
     except Exception:
         api_key = ""
 
+# ─── Load Mind Map HTML ───────────────────────────────────────────────────────
+MINDMAP_HTML = ""
+try:
+    with open(os.path.join(os.path.dirname(__file__), "mindmap.html"), "r", encoding="utf-8") as f:
+        MINDMAP_HTML = f.read()
+except Exception:
+    MINDMAP_HTML = "<p style='color:#64748b;padding:2rem;text-align:center'>Mind map file not found.</p>"
+
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
     <div class="sidebar-logo">
-      <div style="font-size:2rem">🏭</div>
+      <div style="font-size:1.9rem">🏭</div>
       <h2>ENPPI SAP Assistant</h2>
-      <p>DBSS Division · S/4HANA On-Premise</p>
+      <p>DBSS · S/4HANA On-Premise</p>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="sidebar-section">Mode</div>', unsafe_allow_html=True)
+    # ── Mind Map button ──
+    st.markdown('<div class="sidebar-section">Tools</div>', unsafe_allow_html=True)
+    mindmap_active = st.session_state.active_mode == "__mindmap__"
+    mm_prefix = "▶ " if mindmap_active else ""
+    if st.button(f"{mm_prefix}🗺 Object Mind Map", key="btn_mindmap"):
+        st.session_state.active_mode = "__mindmap__"
+        st.rerun()
+
+    # ── Chat modes ──
+    st.markdown('<div class="sidebar-section">Chat Modes</div>', unsafe_allow_html=True)
     for mode_key, mode_cfg in MODES.items():
         prefix = "▶ " if st.session_state.active_mode == mode_key else ""
         if st.button(f"{prefix}{mode_cfg['label']}", key=f"btn_{mode_key}"):
@@ -120,62 +140,91 @@ with st.sidebar:
     st.markdown("---")
     st.markdown('<div class="sidebar-section">Session</div>', unsafe_allow_html=True)
     st.markdown(
-        f'<div class="token-badge">🔢 Approx. tokens used: {st.session_state.total_tokens:,}</div>',
+        f'<div class="token-badge">Tokens used: {st.session_state.total_tokens:,}</div>',
         unsafe_allow_html=True,
     )
 
-    history = st.session_state.histories[st.session_state.active_mode]
-    mode_cfg = MODES[st.session_state.active_mode]
-    if history:
-        export_md = f"# ENPPI SAP Assistant — {mode_cfg['label']}\nExported: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n---\n\n"
-        for msg in history:
-            label = "**You**" if msg["role"] == "user" else "**SAP Assistant**"
-            export_md += f"{label}:\n\n{msg['content']}\n\n---\n\n"
-        st.download_button(
-            "⬇️ Export conversation (.md)",
-            data=export_md,
-            file_name=f"sap_{st.session_state.active_mode}_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
-            mime="text/markdown",
-        )
-    if st.button("🗑️ Clear conversation", key="clear"):
-        st.session_state.histories[st.session_state.active_mode] = []
-        st.rerun()
+    # Export / clear — only for chat modes
+    if st.session_state.active_mode not in ("__mindmap__",):
+        mode_cfg = MODES.get(st.session_state.active_mode, list(MODES.values())[0])
+        history = st.session_state.histories.get(st.session_state.active_mode, [])
+        if history:
+            export_md = (
+                f"# ENPPI SAP Assistant — {mode_cfg['label']}\n"
+                f"Exported: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n---\n\n"
+            )
+            for msg in history:
+                label = "**You**" if msg["role"] == "user" else "**SAP Assistant**"
+                export_md += f"{label}:\n\n{msg['content']}\n\n---\n\n"
+            st.download_button(
+                "⬇️ Export conversation",
+                data=export_md,
+                file_name=f"sap_{st.session_state.active_mode}_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
+                mime="text/markdown",
+            )
+        if st.button("🗑️ Clear conversation", key="clear"):
+            st.session_state.histories[st.session_state.active_mode] = []
+            st.rerun()
 
+    # API key input (silent — no warning shown in main area)
     if not api_key:
         st.markdown("---")
-        st.markdown('<div class="sidebar-section">API Key</div>', unsafe_allow_html=True)
-        api_key = st.text_input("Anthropic API Key", type="password", placeholder="sk-ant-...")
-        st.caption("Or set ANTHROPIC_API_KEY as an environment variable.")
+        st.markdown('<div class="sidebar-section">Configuration</div>', unsafe_allow_html=True)
+        api_key = st.text_input("API Key", type="password", placeholder="sk-ant-...",
+                                label_visibility="collapsed")
 
-# ─── Main ─────────────────────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════
+# ─── MIND MAP VIEW ───────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════
+if st.session_state.active_mode == "__mindmap__":
+    st.markdown("""
+    <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:0.6rem;">
+      <div style="font-size:1.5rem">🗺</div>
+      <div>
+        <div style="color:#e2e8f0;font-size:1.05rem;font-weight:700;">SAP S/4HANA Object Mind Map</div>
+        <div style="color:#64748b;font-size:0.78rem;">Interactive reference — 5 modules · 45 object types · 1,200+ fields</div>
+      </div>
+    </div>
+    <hr style="border-color:#1e2533;margin-bottom:0.6rem;">
+    """, unsafe_allow_html=True)
+    components.html(MINDMAP_HTML, height=750, scrolling=False)
+    st.stop()
+
+# ═══════════════════════════════════════════════════════════════════
+# ─── CHAT VIEW ───────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════
 mode_cfg = MODES[st.session_state.active_mode]
 history  = st.session_state.histories[st.session_state.active_mode]
 
 # Mode header
 st.markdown(f"""
-<div style="display:flex; align-items:center; gap:0.7rem; margin-bottom:1rem;">
-  <div style="font-size:1.6rem">{mode_cfg['icon']}</div>
+<div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:0.9rem;">
+  <div style="font-size:1.5rem">{mode_cfg['icon']}</div>
   <div>
-    <div style="color:#e2e8f0; font-size:1.1rem; font-weight:700;">{mode_cfg['label']}</div>
-    <div style="color:#64748b; font-size:0.8rem;">{mode_cfg['description']}</div>
+    <div style="color:#e2e8f0;font-size:1.05rem;font-weight:700;">{mode_cfg['label']}</div>
+    <div style="color:#64748b;font-size:0.78rem;">{mode_cfg['description']}</div>
   </div>
 </div>
-<hr style="border-color:#1e2533; margin-bottom:1rem;">
+<hr style="border-color:#1e2533;margin-bottom:0.9rem;">
 """, unsafe_allow_html=True)
 
-# Welcome card when empty
+# Welcome card
 if not history:
     examples = [e.strip().lstrip("e.g. ").strip() for e in mode_cfg["placeholder"].split(". ") if e.strip()]
-    chips = "".join(f'<span style="background:#1a2035;border:1px solid #2a3a50;border-radius:20px;padding:0.25rem 0.7rem;color:#94a3b8;font-size:0.78rem;margin:0.2rem;display:inline-block;">💡 {e}</span>' for e in examples)
+    chips = "".join(
+        f'<span style="background:#141921;border:1px solid #2a3a55;border-radius:20px;'
+        f'padding:0.22rem 0.65rem;color:#94a3b8;font-size:0.76rem;margin:0.2rem;display:inline-block;">💡 {e}</span>'
+        for e in examples
+    )
     st.markdown(f"""
     <div class="welcome-card">
       <h2>{mode_cfg['icon']} {mode_cfg['label'].split(' ', 1)[1]}</h2>
       <p>{mode_cfg['description']}</p>
-      <div style="display:flex;flex-wrap:wrap;gap:0.3rem;">{chips}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:0.25rem;">{chips}</div>
     </div>
     """, unsafe_allow_html=True)
 
-# Render history
+# Chat history
 for msg in history:
     if msg["role"] == "user":
         st.markdown(f"""
@@ -184,14 +233,17 @@ for msg in history:
           {msg['content']}
         </div>""", unsafe_allow_html=True)
     else:
-        st.markdown('<div class="msg-assistant"><div class="msg-label msg-label-assistant">SAP Assistant</div></div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="msg-assistant"><div class="msg-label msg-label-assistant">SAP Assistant</div></div>',
+            unsafe_allow_html=True,
+        )
         st.markdown(msg["content"])
 
-# Input
-if not api_key:
-    st.warning("⚠️ Add your Anthropic API key in the sidebar to start chatting.", icon="🔑")
-
-user_input = st.chat_input(mode_cfg["placeholder"], disabled=not bool(api_key))
+# Chat input — no warning shown; just disable quietly if no key
+user_input = st.chat_input(
+    mode_cfg["placeholder"],
+    disabled=not bool(api_key)
+)
 
 if user_input and api_key:
     history.append({"role": "user", "content": user_input})
@@ -216,7 +268,8 @@ if user_input and api_key:
             for text in stream.text_stream:
                 full_response += text
                 response_area.markdown(
-                    f'<div class="msg-assistant"><div class="msg-label msg-label-assistant">SAP Assistant</div></div>',
+                    '<div class="msg-assistant">'
+                    '<div class="msg-label msg-label-assistant">SAP Assistant</div></div>',
                     unsafe_allow_html=True,
                 )
                 response_area.markdown(full_response + "▌")
@@ -227,10 +280,10 @@ if user_input and api_key:
         st.session_state.total_tokens += len(user_input.split()) + len(full_response.split())
 
     except anthropic.AuthenticationError:
-        st.error("❌ Invalid API key. Please check and try again.")
+        st.error("❌ Invalid API key. Please check in the sidebar.")
     except anthropic.RateLimitError:
         st.error("⚠️ Rate limit reached — please wait a moment.")
     except Exception as e:
-        st.error(f"❌ Unexpected error: {e}")
+        st.error(f"❌ Error: {e}")
 
     st.rerun()
