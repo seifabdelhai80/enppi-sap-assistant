@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SAP S/4HANA Object Reference — ENPPI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{background:#daeaf5;color:#071828;font-family:"Segoe UI",system-ui,sans-serif}
+  #root{height:100vh;display:flex;flex-direction:column}
+  ::-webkit-scrollbar{width:5px}
+  ::-webkit-scrollbar-track{background:#daeaf5}
+  ::-webkit-scrollbar-thumb{background:#4a88b0;border-radius:3px}
+  button{font-family:inherit;cursor:pointer;border:none;outline:none}
+  code{font-family:"Courier New",monospace}
+  input{font-family:inherit}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const P = {
+  bg:       "#daeaf5",
+  bgMid:    "#cfe3f0",
+  bgCard:   "#edf5fb",
+  bgDeep:   "#c4d9ea",
+  border:   "#4a88b0",
+  border2:  "#7aaecb",
+  accent:   "#0b3d5e",
+  accentMd: "#1a6a9a",
+  accentLt: "#c2dced",
+  textPri:  "#071828",
+  textSec:  "#0c3a58",
+  textMut:  "#2a6080",
+};
+
+const DATA = {
+  MM: {
+    label:"MM", full:"Materials Management",
+    objects:[
+      { id:"mat", label:"Material Master",
+        table:"MARA / MARC / MARD / MARM / MLAN / MLGN / MLGT",
+        attrs:[
+          "MATNR  Material Number (18-char)",
+          "MTART  Material Type (ROH, HALB, FERT, HIBE…)",
+          "MATKL  Material Group",
+          "MEINS  Base Unit of Measure",
+          "BRGEW  Gross Weight",
+          "NTGEW  Net Weight",
+          "GEWEI  Weight Unit",
+          "VOLUM  Volume / VOLEH Volume Unit",
+          "NORMT  Industry Standard Description",
+          "WERKS  Plant (MARC key)",
+          "EKGRP  Purchasing Group (MARC)",
+          "DISMM  MRP Type (MARC)",
+          "BESKZ  Procurement Type E=In-house F=External (MARC)",
+          "MINBE  Reorder Point (MARC)",
+          "MABST  Maximum Stock Level (MARC)",
+          "EISBE  Safety Stock (MARC)",
+          "PLIFZ  Planned Delivery Time in Days (MARC)",
+          "LGORT  Storage Location (MARD key)",
+          "LABST  Unrestricted Stock (MARD)",
+          "EINME  Restricted-Use Stock (MARD)",
+          "SPEME  Blocked Stock (MARD)",
+          "BKLAS  Valuation Class (MBEW)",
+          "VPRSV  Price Control S=Standard V=Moving Avg (MBEW)",
+          "STPRS  Standard Price (MBEW)",
+          "VERPR  Moving Average Price (MBEW)",
+          "SALK3  Total Stock Value (MBEW)",
+          "LWEIB  Alternative Unit of Measure (MARM)",
+          "UMREZ  Numerator for UoM Conversion (MARM)",
+          "UMREN  Denominator for UoM Conversion (MARM)",
+        ]},
+      { id:"po", label:"Purchase Order",
+        table:"EKKO (Header) / EKPO (Item) / EKET (Schedule)",
+        attrs:[
+          "EBELN  PO Number",
+          "BSART  Doc Type (NB=Standard, FO=Framework Order)",
+          "LIFNR  Vendor Account",
+          "BUKRS  Company Code",
+          "EKORG  Purchasing Organization",
+          "EKGRP  Purchasing Group",
+          "BEDAT  PO Date",
+          "WAERS  Currency",
+          "ZTERM  Payment Terms",
+          "INCO1  Incoterms Part 1",
+          "INCO2  Incoterms Part 2",
+          "EBELP  Item Number (EKPO)",
+          "MATNR  Material",
+          "TXZ01  Short Text",
+          "WERKS  Plant",
+          "LGORT  Storage Location",
+          "MENGE  PO Quantity",
+          "MEINS  Order Unit",
+          "NETPR  Net Price",
+          "PEINH  Price Unit",
+          "NETWR  Net Order Value",
+          "EINDT  Delivery Date (EKET)",
+          "MENGE  Scheduled Quantity (EKET)",
+          "KNTTP  Account Assignment Category",
+          "PSTYP  Item Category",
+          "LOEKZ  Deletion Indicator",
+          "ELIKZ  Final Delivery Indicator",
+          "EREKZ  Final Invoice Indicator",
+          "WEPOS  GR-Based Invoice Verification Flag",
+        ]},
+      { id:"pr", label:"Purchase Requisition",
+        table:"EBAN",
+        attrs:[
+          "BANFN  PR Number",
+          "BNFPO  Item Number",
+          "BSART  Document Type",
+          "BADAT  Creation Date",
+          "AFNAM  Requisitioner Name",
+          "MATNR  Material",
+          "TXZ01  Short Text",
+          "MENGE  Requested Quantity",
+          "MEINS  Unit of Measure",
+          "LFDAT  Delivery Date",
+          "WERKS  Plant",
+          "LGORT  Storage Location",
+          "EKGRP  Purchasing Group",
+          "KNTTP  Account Assignment Category",
+          "KOSTL  Cost Center",
+          "AUFNR  Order Number",
+          "PREIS  Valuation Price",
+          "WAERS  Currency",
+          "STATU  Processing Status (N=New, B=PO Created)",
+          "EBELN  PO Number (after conversion)",
+          "EBELP  PO Item (after conversion)",
+          "VRTKZ  Distribution Indicator",
+        ]},
+      { id:"goods", label:"Goods Movement",
+        table:"MATDOC (S/4HANA — replaces MSEG + MKPF)",
+        attrs:[
+          "MBLNR  Material Document Number",
+          "MJAHR  Material Document Year",
+          "ZEILE  Line Item",
+          "BWART  Movement Type (101=GR, 102=GR Reversal, 261=GI to Order, 311=Transfer, 501=Initial Entry…)",
+          "MATNR  Material",
+          "WERKS  Plant",
+          "LGORT  Storage Location",
+          "CHARG  Batch Number",
+          "MENGE  Quantity",
+          "MEINS  Unit of Measure",
+          "DMBTR  Amount in Local Currency",
+          "WAERS  Currency",
+          "BUDAT  Posting Date",
+          "BLDAT  Document Date",
+          "EBELN  Reference PO (for GR)",
+          "EBELP  PO Item",
+          "AUFNR  Order (for GI to production/PS)",
+          "KOSTL  Cost Center (for GI to cost center)",
+          "PSPNR  WBS Element (for GI to project)",
+          "SHKZG  Debit/Credit Indicator (S=Debit, H=Credit)",
+          "XBLNR  External Document Reference",
+          "BWTAR  Valuation Type",
+        ]},
+      { id:"vendor", label:"Vendor / Business Partner",
+        table:"BUT000 / LFA1 (General) / LFB1 (Company) / LFM1 (Purchasing)",
+        attrs:[
+          "PARTNER  BP Number (BUT000)",
+          "BU_GROUP BP Group (FLVN00, FLVN01)",
+          "NAME1    Name 1",
+          "NAME2    Name 2",
+          "LAND1    Country",
+          "REGIO    Region",
+          "STRAS    Street Address",
+          "ORT01    City",
+          "PSTLZ    Postal Code",
+          "STCD1    Tax Number 1 (VAT Reg. No.)",
+          "STCD2    Tax Number 2",
+          "LIFNR    Vendor Account (LFA1)",
+          "KTOKK    Vendor Account Group",
+          "SPERR    Central Posting Block",
+          "LOEVM    Central Deletion Flag",
+          "AKONT    Reconciliation Account (LFB1)",
+          "ZTERM    Payment Terms (LFB1)",
+          "ZWELS    Payment Methods (LFB1)",
+          "FDGRV    Planning Group (LFB1)",
+          "EKORG    Purchasing Organization (LFM1)",
+          "WAERS    Order Currency (LFM1)",
+          "INCO1    Incoterms (LFM1)",
+          "MINBW    Minimum Order Value (LFM1)",
+        ]},
+      { id:"inforec", label:"Purchasing Info Record",
+        table:"EINA (General) / EINE (Purchasing Org)",
+        attrs:[
+          "INFNR  Info Record Number",
+          "MATNR  Material",
+          "LIFNR  Vendor",
+          "WERKS  Plant",
+          "EKORG  Purchasing Organization",
+          "INFAI  Info Record Type (0=Standard, 1=Consignment, 2=Pipeline, 3=Sub-contracting)",
+          "NETPR  Net Price",
+          "PEINH  Price Unit",
+          "MEINS  Order Unit",
+          "MINBM  Minimum Order Quantity",
+          "NORBM  Standard Order Quantity",
+          "WEBAZ  Goods Receipt Processing Time (days)",
+          "MWSKZ  Tax Code",
+          "DATBI  Validity End Date",
+          "DATAB  Validity Start Date",
+          "PREIS  Effective Price",
+        ]},
+      { id:"outline", label:"Outline Agreement",
+        table:"EKKO / EKPO (BSART = MK / WK / LP)",
+        attrs:[
+          "EBELN  Agreement Number",
+          "BSART  Type (MK=Qty Contract, WK=Value Contract, LP=Scheduling Agmt)",
+          "LIFNR  Vendor",
+          "EKORG  Purchasing Organization",
+          "KDATB  Validity Start Date",
+          "KDATE  Validity End Date",
+          "EBELP  Item Number (EKPO)",
+          "MATNR  Material",
+          "KTMNG  Target Quantity (Contract)",
+          "KTPNR  Target Value (Value Contract)",
+          "KAMOZ  Qty Already Called Off",
+          "KZABS  Call-Off Order Allowed Flag",
+          "ETENR  Schedule Line Number (LP-EKET)",
+          "EINDT  Delivery Date (Schedule Line)",
+          "MENGE  Scheduled Quantity (Schedule Line)",
+        ]},
+      { id:"batch", label:"Batch Management",
+        table:"MCH1 (Key) / MCHA (Plant/SLoc) / MCH7",
+        attrs:[
+          "MATNR  Material",
+          "CHARG  Batch Number",
+          "WERKS  Plant (MCHA)",
+          "LGORT  Storage Location (MCHA)",
+          "CLABS  Unrestricted Batch Stock (MCHA)",
+          "CEINM  Restricted Batch Stock (MCHA)",
+          "CSPEM  Blocked Batch Stock (MCHA)",
+          "HSDAT  Manufacturing Date",
+          "VFDAT  Expiry Date / Shelf Life Expiry Date",
+          "MHDRZ  Remaining Shelf Life (days)",
+          "MHDLP  Minimum Remaining Shelf Life",
+          "KLABS  Batch Classification Values (AUSP)",
+        ]},
+      { id:"srvsht", label:"Service Entry Sheet",
+        table:"ESSR (Header) / ESLL (Lines)",
+        attrs:[
+          "LBLNI  Entry Sheet Number",
+          "EBELN  Purchase Order",
+          "EBELP  PO Item",
+          "LBLDT  Creation Date",
+          "ERNAM  Created By",
+          "NETWR  Net Value",
+          "WAERS  Currency",
+          "ACEPT  Acceptance Indicator",
+          "ESLNR  Line Number (ESLL)",
+          "SRVPOS  Service Number",
+          "KTEXT1  Service Short Text",
+          "MENGE  Service Quantity",
+          "MEINS  Unit of Measure",
+          "TBTWR  Net Value per Line",
+        ]},
+      { id:"valuation", label:"Material Valuation",
+        table:"MBEW (Valuation Area) / BSIM (Special Stock)",
+        attrs:[
+          "MATNR  Material",
+          "BWKEY  Valuation Area (= Plant in S/4HANA)",
+          "BWTAR  Valuation Type (for split valuation)",
+          "VPRSV  Price Control (S or V)",
+          "VERPR  Moving Average Price",
+          "STPRS  Standard Price",
+          "PEINH  Price Unit",
+          "LBKUM  Total Valuated Stock",
+          "SALK3  Total Stock Value",
+          "LFGJA  Fiscal Year of Last Entry",
+          "LFMON  Month of Last Entry",
+          "BWPH1..4  Price per Period (Periodic COGS)",
+        ]},
+    ]
+  },
+
+  FICO: {
+    label:"FI/CO", full:"Finance & Controlling",
+    objects:[
+      { id:"acdoca", label:"Universal Journal (GL)",
+        table:"ACDOCA — primary FI/CO table in S/4HANA",
+        attrs:[
+          "RLDNR  Ledger (0L=Leading, 2L=Extension)",
+          "RBUKRS Company Code",
+          "GJAHR  Fiscal Year",
+          "BELNR  Accounting Document Number",
+          "DOCLN  Document Line (6-digit, replaces BSEG line)",
+          "BUDAT  Posting Date",
+          "BLDAT  Document Date",
+          "BLART  Document Type (SA, KR, DR, KZ…)",
+          "MONAT  Posting Period",
+          "USNAM  User Name",
+          "RACCT  GL Account",
+          "KOSTL  Cost Center",
+          "PRCTR  Profit Center",
+          "SEGMENT Segment",
+          "AUFNR  Internal Order / Network Number",
+          "PROJK  WBS Element Internal Number",
+          "MATNR  Material",
+          "WERKS  Plant",
+          "KUNNR  Customer (for AR)",
+          "LIFNR  Vendor (for AP)",
+          "ANLN1  Asset Main Number",
+          "ANLN2  Asset Sub Number",
+          "HSL    Amount in Company Code Currency",
+          "KSL    Amount in Group Currency",
+          "OSL    Amount in Object Currency",
+          "MSL    Amount in Transaction Currency",
+          "MENGE  Quantity",
+          "MEINS  Unit of Measure",
+          "SHKZG  Debit/Credit Indicator (S=Debit H=Credit)",
+          "AUGBL  Clearing Document",
+          "AUGDT  Clearing Date",
+          "XRAGL  Clearing Flag",
+        ]},
+      { id:"gl_acct", label:"GL Account Master",
+        table:"SKA1 (Chart of Accounts) / SKB1 (Company Code)",
+        attrs:[
+          "KTOPL  Chart of Accounts (SKA1 key)",
+          "SAKNR  GL Account Number",
+          "KTOKS  Account Group",
+          "XBILK  Balance Sheet Account Flag",
+          "GVTYP  P&L Statement Account Type",
+          "VBUND  Trading Partner Company (intercompany)",
+          "BUKRS  Company Code (SKB1 key)",
+          "WAERS  Account Currency",
+          "XOPVW  Open Item Management Flag",
+          "XSALD  Line Item Display Flag",
+          "MWSKZ  Tax Category",
+          "FSTAG  Field Status Group",
+          "ZUAWA  Sort Key (Line Item Text)",
+          "HBKID  Default House Bank",
+          "HKTID  Default Account ID",
+        ]},
+      { id:"cost_ctr", label:"Cost Center",
+        table:"CSKS (Master) / CSKT (Text) / CSKA (Cost Elements by CC)",
+        attrs:[
+          "KOKRS  Controlling Area",
+          "KOSTL  Cost Center",
+          "DATBI  Valid To Date",
+          "DATAB  Valid From Date",
+          "KTEXT  Name (short)",
+          "LTEXT  Description (long)",
+          "KOSAR  Cost Center Category",
+          "VERAK  Person Responsible",
+          "BUKRS  Company Code",
+          "GSBER  Business Area",
+          "PRCTR  Profit Center",
+          "KHINR  Hierarchy Node",
+          "WAERS  Currency",
+          "BKZLS  Locking Flag for Actual Postings",
+          "BKZPL  Locking Flag for Planning",
+        ]},
+      { id:"cost_elem", label:"Cost Element",
+        table:"CSKA (CoA-level) / CSKB (Controlling Area)",
+        attrs:[
+          "KTOPL  Chart of Accounts",
+          "KSTAR  Cost Element",
+          "KATYP  Cost Element Category (1=Primary, 11=Revenue, 21=Internal Settlement…)",
+          "KOKRS  Controlling Area (CSKB)",
+          "DATBI  Valid To (CSKB)",
+          "DATAB  Valid From (CSKB)",
+          "KTEXT  Name",
+          "LTEXT  Long Text",
+          "VKOST  Default Cost Center",
+          "VKOSTV Validation Flag",
+        ]},
+      { id:"profit_ctr", label:"Profit Center",
+        table:"CEPC (Master) / CEPCT (Text)",
+        attrs:[
+          "KOKRS  Controlling Area",
+          "PRCTR  Profit Center",
+          "DATBI  Valid To",
+          "DATAB  Valid From",
+          "KTEXT  Name",
+          "LTEXT  Long Text",
+          "VERAK  Person Responsible",
+          "BUKRS  Company Code Assignment",
+          "GSBER  Business Area",
+          "SEGMENT Segment",
+          "PRCTR_GRP Hierarchy Node",
+          "WAERS  Currency",
+          "BKZLS  Lock for Actual Postings",
+        ]},
+      { id:"int_order", label:"Internal Order",
+        table:"AUFK (Master) / AUFP (Settlement Rule) / AUFKS (Status)",
+        attrs:[
+          "AUFNR  Order Number",
+          "AUART  Order Type (e.g. 0100=Overhead)",
+          "KTEXT  Short Description",
+          "KOKRS  Controlling Area",
+          "BUKRS  Company Code",
+          "KOSTV  Responsible Cost Center",
+          "PRCTR  Profit Center",
+          "GSBER  Business Area",
+          "WERKS  Plant",
+          "OBJNR  Object Number (for status management)",
+          "ERDAT  Creation Date",
+          "LOEKZ  Deletion Flag",
+          "ISTAT  System Status (CRTD, REL, TECO, CLSD)",
+          "WAERS  Currency",
+          "BSAUS  Settlement Profile (AUFP)",
+          "EMPFG  Settlement Receiver (AUFP)",
+        ]},
+      { id:"asset", label:"Fixed Asset",
+        table:"ANLA (General) / ANLZ (Time-Dep.) / ANLB (Depreciation)",
+        attrs:[
+          "BUKRS  Company Code",
+          "ANLN1  Main Asset Number",
+          "ANLN2  Sub-Asset Number",
+          "ANLKL  Asset Class",
+          "TXT50  Asset Description (line 1)",
+          "TXT50_2 Asset Description (line 2)",
+          "KOSTL  Cost Center",
+          "PRCTR  Profit Center",
+          "GSBER  Business Area",
+          "WERKS  Plant",
+          "RAUMN  Room Number",
+          "STORT  Location",
+          "AKTIV  Asset Capitalization Date",
+          "DEAKT  Deactivation Date",
+          "AFASL  Depreciation Key (ANLB)",
+          "NDJAR  Useful Life in Years (ANLB)",
+          "NDJHR  Useful Life in Periods (ANLB)",
+          "AFABER Depreciation Area (ANLB)",
+          "NAFAG  Accumulated Depreciation",
+        ]},
+      { id:"payment", label:"Payment Run",
+        table:"REGUH (Control) / REGUP (Items Paid)",
+        attrs:[
+          "LAUFD  Run Date",
+          "LAUFI  Run Identification",
+          "ZBUKR  Paying Company Code",
+          "LIFNR  Vendor (REGUP)",
+          "KUNNR  Customer (REGUP)",
+          "BELNR  Accounting Document (REGUP)",
+          "GJAHR  Fiscal Year (REGUP)",
+          "VBLNR  Payment Document",
+          "RWBTR  Payment Amount",
+          "WAERS  Currency",
+          "HBKID  House Bank",
+          "HKTID  Bank Account ID",
+          "RZAWE  Payment Method",
+          "VALUT  Value Date",
+          "ZALDT  Due Date",
+        ]},
+      { id:"dunning", label:"Dunning",
+        table:"MHND (Dunning Header) / MHNK (Account Data)",
+        attrs:[
+          "LAUFD  Dunning Run Date",
+          "LAUFI  Dunning Run ID",
+          "BUKRS  Company Code",
+          "LIFNR  Vendor / KUNNR Customer",
+          "MAHNA  Dunning Procedure",
+          "MAHNS  Dunning Level",
+          "MABER  Dunning Area",
+          "MANSP  Dunning Block",
+          "MADAT  Date of Last Dunning Notice",
+          "BELNR  Overdue Document (MHNK)",
+          "DMBTR  Overdue Amount",
+          "WAERS  Currency",
+        ]},
+      { id:"controlling", label:"Controlling Area Config",
+        table:"TKA01 (Area) / TKA02 (CoCode Assignment)",
+        attrs:[
+          "KOKRS  Controlling Area",
+          "BEZEI  Name",
+          "WAERS  Currency",
+          "KTOPL  Chart of Accounts",
+          "RCOAR  Reconciliation Ledger",
+          "GJAHR  Fiscal Year Variant",
+          "VKMOD  Allocation Version",
+          "BUKRS  Company Code (TKA02)",
+        ]},
+    ]
+  },
+
+  SD: {
+    label:"SD", full:"Sales & Distribution",
+    objects:[
+      { id:"inquiry", label:"Inquiry / Quotation",
+        table:"VBAK (Header) / VBAP (Item) — AUART=IN or QT",
+        attrs:[
+          "VBELN  Document Number",
+          "AUART  Type (IN=Inquiry, QT=Quotation)",
+          "VKORG  Sales Organization",
+          "VTWEG  Distribution Channel",
+          "SPART  Division",
+          "KUNNR  Sold-To Party",
+          "ERDAT  Creation Date",
+          "ANGDT  Quotation Date",
+          "BNDDT  Quotation Valid-To Date",
+          "WAERK  Currency",
+          "NETWR  Net Value",
+          "POSNR  Item Number (VBAP)",
+          "MATNR  Material",
+          "KWMENG Quantity",
+          "NETPR  Net Price",
+          "PSTYV  Item Category (AGN, AFN…)",
+        ]},
+      { id:"sorder", label:"Sales Order",
+        table:"VBAK (Header) / VBAP (Item) / VBKD (Business Data)",
+        attrs:[
+          "VBELN  Sales Document Number",
+          "AUART  Document Type (OR, RE, CS, RO…)",
+          "VKORG  Sales Organization",
+          "VTWEG  Distribution Channel",
+          "SPART  Division",
+          "VKBUR  Sales Office",
+          "VKGRP  Sales Group",
+          "KUNNR  Sold-To Party",
+          "ERDAT  Creation Date",
+          "WAERK  Currency",
+          "NETWR  Net Value (Header)",
+          "MWSBK  Tax Amount (Header)",
+          "POSNR  Item Number (VBAP)",
+          "MATNR  Material",
+          "ARKTX  Material Short Text",
+          "KWMENG Order Quantity",
+          "MEINS  Unit of Measure",
+          "NETPR  Net Price",
+          "WERKS  Plant",
+          "LGORT  Storage Location",
+          "VSTEL  Shipping Point",
+          "EDATU  Requested Delivery Date",
+          "PSTYV  Item Category (TAN, TANN, TAX…)",
+          "ABGRU  Rejection Reason",
+          "GBSTA  Overall Processing Status",
+          "LFSTA  Delivery Status",
+          "FKSTA  Billing Status",
+          "ZTERM  Payment Terms (VBKD)",
+          "INCO1  Incoterms (VBKD)",
+        ]},
+      { id:"schedline", label:"Schedule Line",
+        table:"VBEP",
+        attrs:[
+          "VBELN  Sales Document",
+          "POSNR  Item Number",
+          "ETENR  Schedule Line Number",
+          "EDATU  Delivery Date",
+          "WMENG  Confirmed Quantity",
+          "OMENG  Order Quantity",
+          "WADAT  Goods Issue Date",
+          "MBDAT  Material Availability Date",
+          "LDDAT  Loading Date",
+          "TDDAT  Transportation Planning Date",
+          "LFNRZ  Delivery Number (after delivery creation)",
+          "ETTYP  Schedule Line Category",
+        ]},
+      { id:"delivery", label:"Outbound Delivery",
+        table:"LIKP (Header) / LIPS (Item)",
+        attrs:[
+          "VBELN  Delivery Number",
+          "LFART  Delivery Type (LF, LR…)",
+          "KUNNR  Ship-To Party",
+          "VSTEL  Shipping Point",
+          "ROUTE  Route",
+          "WADAT  Planned Goods Issue Date",
+          "LDDAT  Loading Date",
+          "KODAT  Picking Date",
+          "LFDAT  Planned Delivery Date",
+          "TRATY  Means of Transport",
+          "LGNUM  Warehouse Number",
+          "POSNR  Item Number (LIPS)",
+          "MATNR  Material",
+          "LFIMG  Actual Delivery Quantity",
+          "VRKME  Sales Unit of Measure",
+          "LGORT  Storage Location",
+          "CHARG  Batch",
+          "PIKMG  Picked Quantity",
+          "WBSTA  Goods Movement Status (A=Not, B=Partial, C=Full)",
+          "VGBEL  Reference Sales Document",
+        ]},
+      { id:"billing", label:"Billing Document",
+        table:"VBRK (Header) / VBRP (Item)",
+        attrs:[
+          "VBELN  Billing Document",
+          "FKART  Billing Type (F2, G2, L2, RE, S1…)",
+          "FKDAT  Billing Date",
+          "BUKRS  Company Code",
+          "KUNRG  Payer",
+          "KUNNR  Sold-To Party",
+          "WAERK  Currency",
+          "NETWR  Net Value (Header)",
+          "MWSBK  Tax Amount (Header)",
+          "RFBSK  Accounting Transfer Status",
+          "POSNR  Item (VBRP)",
+          "MATNR  Material",
+          "FKLMG  Billing Quantity",
+          "VRKME  Unit",
+          "NETWR_P Net Item Value",
+          "MWSBP  Item Tax",
+          "AUBEL  Origin Sales Order",
+          "AUPOS  Origin Item",
+          "VGBEL  Reference Delivery",
+        ]},
+      { id:"customer", label:"Customer / Business Partner",
+        table:"BUT000 / KNA1 (General) / KNVV (Sales Area) / KNKK (Credit)",
+        attrs:[
+          "PARTNER  BP Number (BUT000)",
+          "BU_GROUP BP Group (FLCU00, FLCU01)",
+          "NAME1    Name",
+          "LAND1    Country",
+          "REGIO    Region",
+          "STRAS    Street",
+          "ORT01    City",
+          "PSTLZ    Postal Code",
+          "STCD1    VAT Registration Number",
+          "KUNNR    Customer Account (KNA1)",
+          "KTOKD    Customer Account Group",
+          "VKORG    Sales Organization (KNVV)",
+          "VTWEG    Distribution Channel (KNVV)",
+          "SPART    Division (KNVV)",
+          "ZTERM    Payment Terms (KNVV)",
+          "VKBUR    Sales Office (KNVV)",
+          "KDGRP    Customer Group (KNVV)",
+          "VWERK    Delivering Plant (KNVV)",
+          "KLIMK    Credit Limit (KNKK)",
+          "KNKLI    Credit Exposure (KNKK)",
+          "CTLPC    Credit Risk Class (KNKK)",
+          "CRBLB    Credit Block Indicator (KNKK)",
+        ]},
+      { id:"pricing", label:"Pricing Condition",
+        table:"KONV (Runtime) / KONx A-tables (Master Records)",
+        attrs:[
+          "KNUMV  Condition Document Number",
+          "KPOSN  Condition Item",
+          "STUNR  Step Number",
+          "ZAEHK  Counter",
+          "KSCHL  Condition Type (PR00, MWST, K004, RA01…)",
+          "KAPPL  Application (V=SD, M=MM)",
+          "KWERT  Condition Value",
+          "KBETR  Condition Rate",
+          "KPEIN  Pricing Unit",
+          "KMEIN  Condition Unit",
+          "KRECH  Calculation Type (A=%  B=Fixed  C=Qty)",
+          "KSTEU  Condition Control (manual change rules)",
+          "LIFNR  Vendor (KONA — rebate)",
+          "KUNNR  Customer (A-table key)",
+          "MATNR  Material (A-table key)",
+          "DATBI  Validity End Date",
+          "DATAB  Validity Start Date",
+        ]},
+      { id:"output", label:"Output / Message Determination",
+        table:"NAST",
+        attrs:[
+          "KAPPL  Application (V1=Orders, V2=Shipping, V3=Billing)",
+          "OBJKY  Object Key (document number + item +…)",
+          "KSCHL  Output Type (RD00=Invoice, LD00=Delivery…)",
+          "SPRAS  Language",
+          "PARVW  Partner Function",
+          "PARNR  Partner Number",
+          "NACHA  Transmission Medium (1=Print 5=EDI 6=XML 7=Mail)",
+          "VSTAT  Processing Status (0=Not Proc. 1=OK 2=Error)",
+          "DATVR  Date of Last Transmission",
+          "UHRVR  Time of Last Transmission",
+          "LDEST  Output Device",
+        ]},
+    ]
+  },
+
+  HR: {
+    label:"HR/HCM", full:"Human Capital Management",
+    objects:[
+      { id:"emp_master", label:"Employee Master IT0001/IT0002",
+        table:"PA0001 (Org Assignment) / PA0002 (Personal Data)",
+        attrs:[
+          "PERNR  Personnel Number",
+          "BEGDA  Start Date",
+          "ENDDA  End Date",
+          "PERSG  Employee Group",
+          "PERSK  Employee Subgroup",
+          "ORGEH  Organizational Unit (IT0001)",
+          "PLANS  Position (IT0001)",
+          "STELL  Job (IT0001)",
+          "KOSTL  Cost Center (IT0001)",
+          "BUKRS  Company Code (IT0001)",
+          "WERKS  Personnel Area (IT0001)",
+          "BTRTL  Personnel Subarea (IT0001)",
+          "VDSK1  Organizational Key (IT0001)",
+          "NACHN  Last Name (IT0002)",
+          "VORNA  First Name (IT0002)",
+          "MIDNM  Middle Name (IT0002)",
+          "GBDAT  Date of Birth (IT0002)",
+          "GBORT  Place of Birth (IT0002)",
+          "GESCH  Gender (IT0002)",
+          "NATIO  Nationality (IT0002)",
+          "SPRSL  Communication Language (IT0002)",
+          "FAMST  Marital Status (IT0002)",
+          "ANZKD  Number of Children (IT0002)",
+        ]},
+      { id:"actions", label:"Actions IT0000",
+        table:"PA0000",
+        attrs:[
+          "PERNR  Personnel Number",
+          "BEGDA  Start Date",
+          "ENDDA  End Date",
+          "MASSN  Action Type (01=Hire, 02=Org Change, 10=Termination…)",
+          "MASSG  Reason for Action",
+          "STAT1  Customer-Specific Status",
+          "STAT2  Employment Status (0=Withdrawn 1=Inactive 2=Retiree 3=Active)",
+          "STAT3  Special Payment Status",
+          "PERSG  Employee Group (after action)",
+          "PERSK  Employee Subgroup (after action)",
+        ]},
+      { id:"org_mgmt", label:"Org Management",
+        table:"HRP1000 (Objects) / HRP1001 (Relationships)",
+        attrs:[
+          "PLVAR  Plan Version (01=Active)",
+          "OTYPE  Object Type (O=OrgUnit S=Position C=Job P=Person T=Task)",
+          "OBJID  Object ID",
+          "ISTAT  Object Status (1=Active 2=Planned)",
+          "BEGDA  Valid From",
+          "ENDDA  Valid To",
+          "STEXT  Short Description (HRP1000)",
+          "LANGU  Language (HRP1000)",
+          "RSIGN  Relationship Direction A=Bottom-Up B=Top-Down (HRP1001)",
+          "RELAT  Relationship ID (e.g. 002=Reports To, 003=Belongs To)",
+          "SCLAS  Related Object Type (HRP1001)",
+          "SOBID  Related Object ID (HRP1001)",
+          "PROZT  Percentage (for partial assignments)",
+        ]},
+      { id:"basic_pay", label:"Basic Pay IT0008",
+        table:"PA0008",
+        attrs:[
+          "PERNR  Personnel Number",
+          "BEGDA  Start Date",
+          "ENDDA  End Date",
+          "TRFAR  Pay Scale Type",
+          "TRFGB  Pay Scale Area",
+          "TRFGR  Pay Scale Group",
+          "TRFST  Pay Scale Level",
+          "BSGRD  Capacity Utilization Level (%)",
+          "DIVGV  Number of Time Units",
+          "ZEINH  Time Unit",
+          "LGA01..LGA20  Wage Type 1–20",
+          "BET01..BET20  Wage Amount 1–20",
+          "WAERS  Currency",
+          "ANCUR  Annual Salary",
+        ]},
+      { id:"address", label:"Address IT0006",
+        table:"PA0006",
+        attrs:[
+          "PERNR  Personnel Number",
+          "SUBTY  Address Type (1=Permanent, 2=Temporary…)",
+          "BEGDA  Start Date",
+          "ENDDA  End Date",
+          "STRAS  Street and House Number",
+          "ORT01  City",
+          "STATE  State / Region",
+          "PSTLZ  Postal Code",
+          "LAND1  Country",
+          "TELNR  Telephone Number",
+          "ENTKM  Distance to Work",
+          "ANZKM  Distance Unit",
+        ]},
+      { id:"time_rec", label:"Time Recording IT2002",
+        table:"PA2002 (Attendances)",
+        attrs:[
+          "PERNR  Personnel Number",
+          "SUBTY  Attendance Type",
+          "BEGDA  Start Date",
+          "ENDDA  End Date",
+          "BEGUZ  Start Time",
+          "ENDUZ  End Time",
+          "STDAZ  Number of Hours",
+          "ANZHL  Number of Days",
+          "LSTAR  Activity Type",
+          "ARBID  Work Center",
+          "AUFNR  Order Number",
+          "KOSTL  Cost Center",
+          "PSPNR  WBS Element",
+          "VORNR  Network Activity",
+        ]},
+      { id:"absence", label:"Absence IT2001",
+        table:"PA2001",
+        attrs:[
+          "PERNR  Personnel Number",
+          "SUBTY  Absence Type (0100=Annual Leave, 0200=Sick…)",
+          "BEGDA  Start Date",
+          "ENDDA  End Date",
+          "BEGUZ  Start Time",
+          "ENDUZ  End Time",
+          "ABWTG  Absence Days (calendar days adjusted)",
+          "STDAZ  Absence Hours",
+          "KALTG  Calendar Days",
+          "FABER  Public Holiday Calendar",
+          "PRRAS  Payroll Relevance Indicator",
+        ]},
+      { id:"payroll", label:"Payroll Results",
+        table:"PCL2 Cluster (B2 = International / RX = Results Index)",
+        attrs:[
+          "PERNR  Personnel Number",
+          "SEQNR  Sequential Number",
+          "ABKRS  Payroll Area",
+          "INPER  In-Period (PERMO structure)",
+          "FORPE  For-Period",
+          "FPBEG  Period Start Date",
+          "FPEND  Period End Date",
+          "SRTZA  Payroll Status (A=Original, C=Correction)",
+          "RT     Results Table — Wage Types + Amounts",
+          "CRT    Cumulated Results Table",
+          "WPBP   Work Place / Basic Pay table",
+          "ZL     Time Wage Types",
+          "ALP    Different Payment table",
+          "VERSC  Payroll Shift table",
+        ]},
+      { id:"bank", label:"Bank Details IT0009",
+        table:"PA0009",
+        attrs:[
+          "PERNR  Personnel Number",
+          "SUBTY  Subtype (0=Main Bank, 1=Other Banks…)",
+          "BEGDA  Start Date",
+          "ENDDA  End Date",
+          "BANKL  Bank Key (sort code / routing)",
+          "BANKN  Bank Account Number",
+          "BKONT  Bank Account Type",
+          "IBAN   IBAN",
+          "SWIFT  SWIFT/BIC Code",
+          "ZLSCH  Payment Method",
+          "WAERS  Currency",
+          "BKPLZ  Bank Postal Code",
+        ]},
+    ]
+  },
+
+  PS: {
+    label:"PS", full:"Project Systems",
+    objects:[
+      { id:"proj_def", label:"Project Definition",
+        table:"PROJ",
+        attrs:[
+          "PSPID  Project Number (external ID)",
+          "PSPNR  Project Internal Number",
+          "POST1  Short Description",
+          "VERNR  Responsible Person Employee Number",
+          "VERNA  Responsible Person Name",
+          "PLFAZ  Planned Start Date",
+          "PLSEZ  Planned Finish Date",
+          "PROFL  Project Profile",
+          "WERKS  Plant",
+          "BUKRS  Company Code",
+          "PBUKR  Billing Company Code",
+          "VKORG  Sales Organization",
+          "PRART  Project Type (E=Engineering, V=Customer Project…)",
+          "ASTNR  Applicant Number",
+          "ERNAM  Created By",
+          "ERDAT  Creation Date",
+          "OBJNR  Object Number (Status Management)",
+        ]},
+      { id:"wbs", label:"WBS Element",
+        table:"PRPS (Master) / PRTE (Dates) / BPJA (Budget)",
+        attrs:[
+          "PSPNR  WBS Internal Number",
+          "POSID  WBS Element Code (external)",
+          "POST1  Description",
+          "PSPHI  Project Internal Number (parent PROJ)",
+          "STUFE  Hierarchy Level (1=top)",
+          "UP     Parent WBS Internal Number",
+          "PRART  Project Type",
+          "BELKZ  Account Assignment Element Flag",
+          "FAKKZ  Billing Element Flag",
+          "PLAKZ  Planning Element Flag",
+          "PBUKR  Company Code",
+          "PKOKR  Controlling Area",
+          "PRCTR  Profit Center",
+          "KOSTL  Cost Center (for settlement)",
+          "VERNR  Responsible Person",
+          "OBJNR  Object Number",
+          "ISTAT  System Status (CRTD, REL, TECO, CLSD)",
+          "VKORG  Sales Organization (billing WBS)",
+        ]},
+      { id:"network", label:"Network Header",
+        table:"AUFK",
+        attrs:[
+          "AUFNR  Network Number",
+          "AUART  Order Type (PS01=Standard Network)",
+          "KTEXT  Short Description",
+          "WERKS  Plant",
+          "PSPEL  WBS Element (linked PS element)",
+          "KOSTV  Responsible Cost Center",
+          "ERDAT  Creation Date",
+          "GSTRI  Basic Start Date",
+          "GETRI  Basic Finish Date",
+          "GSTRP  Scheduled Start Date",
+          "GETRP  Scheduled Finish Date",
+          "ISTAT  System Status",
+          "OBJNR  Object Number",
+          "WAERS  Currency",
+          "GAMNG  Total Order Quantity",
+        ]},
+      { id:"activity", label:"Network Activity",
+        table:"AFVC (Activity) / AFVV (Values/Times) / AFVU (User Fields)",
+        attrs:[
+          "AUFPL  Network Internal Number",
+          "APLZL  Internal Counter",
+          "VORNR  Activity Number (external)",
+          "LTXA1  Short Description",
+          "STEUS  Control Key (PS01=Internal, PS02=External, PS03=General Cost)",
+          "ARBID  Work Center",
+          "ARBEI  Work (planned hours)",
+          "DAUNO  Duration",
+          "DAUNE  Duration Unit",
+          "FSSZT  Actual Start Date/Time",
+          "FEEHZ  Actual Finish Date/Time",
+          "MGVRG  Confirmed Quantity",
+          "PSPEL  WBS Element",
+          "LIEFR  Vendor (for external activity)",
+          "KOSTL  Cost Center",
+          "ANLZU  Predecessor relationship (AFAP)",
+        ]},
+      { id:"budget", label:"Project Budget",
+        table:"BPJA (Annual Budget) / BPGE (Overall Budget) / BPDY (Distributed)",
+        attrs:[
+          "OBJNR  Object Number (WBS or Network)",
+          "VERSN  Budget Version (0=Current Plan)",
+          "WRTTP  Value Type (41=Original Budget, 42=Supplement, 43=Return, 44=Transfer)",
+          "GJAHR  Fiscal Year",
+          "WTGES  Overall Budget Value",
+          "WT001..WT016  Period Budget Values P1–P16",
+          "WAERS  Currency",
+          "KOKRS  Controlling Area",
+          "FRGKZ  Release Indicator",
+        ]},
+      { id:"costs", label:"Project Cost Report",
+        table:"RPSCO / COSP (External) / COSS (Internal)",
+        attrs:[
+          "OBJNR  Object Number",
+          "LEDNR  Ledger Number",
+          "VERSN  Version",
+          "WRTTP  Value Type (04=Actual, 10=Commitment, 20=Budget, 01=Plan)",
+          "GJAHR  Fiscal Year",
+          "KSTAR  Cost Element",
+          "WAERS  Currency",
+          "KSP01..KSP12  Period Values (Periods 1–12)",
+          "KSP13..KSP16  Period Values (Periods 13–16)",
+          "WTGES  Total Value",
+          "BEKNZ  Debit/Credit Indicator",
+        ]},
+      { id:"milestone", label:"Milestone",
+        table:"AFMM",
+        attrs:[
+          "AUFPL  Network Internal Number",
+          "APLZL  Activity Counter",
+          "MSPNR  Milestone Number",
+          "MLNAM  Milestone Name",
+          "MEILK  Milestone Category (P=Progress Confirmation, B=Billing, T=General)",
+          "MLDAT  Planned Milestone Date",
+          "FHDAT  Actual Milestone Date",
+          "PROZT  Milestone Percentage of Completion",
+          "FAKSP  Billing Block Flag",
+          "PSPNR  WBS Element",
+          "AUFNR  Network",
+          "VORNR  Activity",
+        ]},
+      { id:"proj_version", label:"Project Version",
+        table:"PVERS (Version Header) / PRPSS (WBS Snapshot)",
+        attrs:[
+          "PSPHI  Project Internal Number",
+          "VERSN  Version Number",
+          "VTEXT  Version Description",
+          "ERDAT  Creation Date",
+          "ERNAM  Created By",
+          "PLFAZ  Start Date Snapshot",
+          "PLSEZ  Finish Date Snapshot",
+          "PSPNR  WBS Internal Number (PRPSS)",
+          "POSID  WBS Code (PRPSS)",
+        ]},
+    ]
+  },
+};
+
+const MOD_KEYS = Object.keys(DATA);
+const CX=510, CY=345, MOD_R=155, OBJ_R=285;
+
+function getModPos(i){
+  const a=(i/MOD_KEYS.length)*2*Math.PI-Math.PI/2;
+  return{x:CX+MOD_R*Math.cos(a),y:CY+MOD_R*Math.sin(a),angle:a};
+}
+function getObjPos(mk,ma){
+  const obs=DATA[mk].objects;
+  const sp=Math.PI*0.65;
+  return obs.map((o,i)=>{
+    const a=ma-sp/2+(i/Math.max(obs.length-1,1))*sp;
+    return{...o,x:CX+OBJ_R*Math.cos(a),y:CY+OBJ_R*Math.sin(a)};
+  });
+}
+
+function MindMap({sm,setSm,so,setSo}){
+  const mpos=MOD_KEYS.map((k,i)=>({key:k,...getModPos(i)}));
+  const opos=sm?getObjPos(sm,mpos.find(m=>m.key===sm).angle):[];
+  return(
+    <svg viewBox="0 0 1020 690" style={{width:"100%",height:"100%"}}>
+      <defs>
+        <radialGradient id="cg" cx="50%" cy="50%">
+          <stop offset="0%" stopColor={P.bgCard}/>
+          <stop offset="100%" stopColor={P.bgMid}/>
+        </radialGradient>
+        <filter id="shadow">
+          <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor={P.border} floodOpacity="0.4"/>
+        </filter>
+      </defs>
+      <rect x={0} y={0} width={1020} height={690} fill="transparent"
+        onClick={()=>{setSm(null);setSo(null);}}/>
+      <circle cx={CX} cy={CY} r={MOD_R} fill="none" stroke={P.border2} strokeWidth={1} strokeDasharray="3,8"/>
+      <circle cx={CX} cy={CY} r={OBJ_R} fill="none" stroke={P.border2} strokeWidth={1} strokeDasharray="2,10"
+        opacity={sm?0.7:0.3}/>
+      {mpos.map(mp=>(
+        <line key={`l-${mp.key}`} x1={CX} y1={CY} x2={mp.x} y2={mp.y}
+          stroke={P.accentMd} strokeWidth={sm===mp.key?2.5:1.5}
+          opacity={sm&&sm!==mp.key?0.1:sm===mp.key?1:0.4}/>
+      ))}
+      {opos.map(op=>{
+        const mp=mpos.find(m=>m.key===sm);
+        return(
+          <line key={`ol-${op.id}`} x1={mp.x} y1={mp.y} x2={op.x} y2={op.y}
+            stroke={P.accentMd} strokeWidth={1.5}
+            opacity={so===op.id?0.9:0.5}
+            strokeDasharray={so===op.id?"none":"4,3"}/>
+        );
+      })}
+      {mpos.map(mp=>{
+        const mod=DATA[mp.key];
+        const isA=sm===mp.key;
+        const isDim=sm&&!isA;
+        return(
+          <g key={mp.key} style={{cursor:"pointer"}}
+            onClick={e=>{e.stopPropagation();setSm(isA?null:mp.key);setSo(null);}}>
+            {isA&&<circle cx={mp.x} cy={mp.y} r={50} fill="none" stroke={P.accent} strokeWidth={2} opacity={0.4}/>}
+            <circle cx={mp.x} cy={mp.y} r={43}
+              fill={isA?P.accent:P.bgCard}
+              stroke={P.accent} strokeWidth={2.5}
+              filter="url(#shadow)"
+              opacity={isDim?0.25:1}/>
+            <text x={mp.x} y={mp.y-5} textAnchor="middle" fontSize="13" fontWeight="800" letterSpacing="0.5"
+              fill={isA?P.bgCard:P.accent} opacity={isDim?0.25:1}>{mod.label}</text>
+            <text x={mp.x} y={mp.y+11} textAnchor="middle" fontSize="7.5" letterSpacing="0.2"
+              fill={isA?P.bgMid:P.textMut} opacity={isDim?0.25:1}>{mod.objects.length} objects</text>
+          </g>
+        );
+      })}
+      {opos.map(op=>{
+        const isSel=so===op.id;
+        const ws=op.label.split(" ");
+        const l1=ws.slice(0,2).join(" ");
+        const l2=ws.slice(2).join(" ");
+        const h=l2?46:36;
+        return(
+          <g key={op.id} style={{cursor:"pointer"}}
+            onClick={e=>{e.stopPropagation();setSo(isSel?null:op.id);}}>
+            <rect x={op.x-63} y={op.y-h/2} width={126} height={h} rx={7}
+              fill={isSel?P.accent:P.bgCard}
+              stroke={P.accent} strokeWidth={isSel?0:2}
+              filter="url(#shadow)"/>
+            <text x={op.x} y={op.y-(l2?5:1)} textAnchor="middle" fontSize="9" fontWeight="700"
+              fill={isSel?P.bgCard:P.textPri}>{l1}</text>
+            {l2&&<text x={op.x} y={op.y+9} textAnchor="middle" fontSize="8"
+              fill={isSel?P.accentLt:P.textSec}>{l2}</text>}
+          </g>
+        );
+      })}
+      <circle cx={CX} cy={CY} r={52} fill="url(#cg)" stroke={P.accent} strokeWidth={2.5} filter="url(#shadow)"/>
+      <text x={CX} y={CY-8} textAnchor="middle" fontSize="13" fontWeight="800" letterSpacing="2" fill={P.accent}>SAP</text>
+      <text x={CX} y={CY+7} textAnchor="middle" fontSize="9" letterSpacing="0.5" fill={P.textSec}>S/4HANA</text>
+      <text x={CX} y={CY+20} textAnchor="middle" fontSize="7" letterSpacing="0.5" fill={P.textMut}>On-Premise</text>
+      {!sm&&<text x={CX} y={680} textAnchor="middle" fontSize="10" fill={P.textMut} letterSpacing="0.3">
+        Select a module node to expand — select an object to view its fields
+      </text>}
+    </svg>
+  );
+}
+
+function Panel({sm,so}){
+  if(!sm) return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+      height:"100%",padding:"2rem",gap:"0.5rem"}}>
+      <div style={{color:P.textMut,fontSize:"0.62rem",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:"0.7rem",fontWeight:700}}>
+        Module Index
+      </div>
+      {MOD_KEYS.map(k=>(
+        <div key={k} style={{display:"flex",alignItems:"baseline",gap:"0.5rem",width:"100%",
+          padding:"0.35rem 0.5rem",borderBottom:`1px solid ${P.border2}`}}>
+          <span style={{color:P.accent,fontWeight:800,fontSize:"0.78rem",minWidth:"50px"}}>{DATA[k].label}</span>
+          <span style={{color:P.textSec,fontSize:"0.7rem",flex:1}}>{DATA[k].full}</span>
+          <span style={{color:P.textMut,fontSize:"0.65rem"}}>{DATA[k].objects.length} obj.</span>
+        </div>
+      ))}
+      <div style={{marginTop:"1.2rem",color:P.textMut,fontSize:"0.68rem"}}>Click any module node to begin</div>
+    </div>
+  );
+  const mod=DATA[sm];
+  const obj=so?mod.objects.find(o=>o.id===so):null;
+  return(
+    <div style={{padding:"1rem",overflowY:"auto",height:"100%"}}>
+      <div style={{borderLeft:`3px solid ${P.accent}`,paddingLeft:"0.6rem",marginBottom:"0.8rem"}}>
+        <div style={{color:P.accent,fontWeight:800,fontSize:"0.9rem",letterSpacing:"0.04em"}}>{mod.label}</div>
+        <div style={{color:P.textSec,fontSize:"0.72rem",marginTop:"0.1rem"}}>{mod.full}</div>
+        <div style={{color:P.textMut,fontSize:"0.65rem",marginTop:"0.1rem"}}>{mod.objects.length} object types</div>
+      </div>
+      {!obj?(
+        <>
+          {mod.objects.map(o=>(
+            <div key={o.id} style={{padding:"0.5rem 0.65rem",marginBottom:"0.35rem",background:P.bgCard,
+              borderRadius:"5px",border:`1px solid ${P.border}`,borderLeft:`3px solid ${P.accentMd}`}}>
+              <div style={{color:P.textPri,fontSize:"0.78rem",fontWeight:700}}>{o.label}</div>
+              <div style={{color:P.textMut,fontSize:"0.62rem",marginTop:"0.12rem",fontFamily:"Courier New,monospace",lineHeight:1.4}}>{o.table}</div>
+              <div style={{color:P.textSec,fontSize:"0.62rem",marginTop:"0.08rem"}}>{o.attrs.length} fields</div>
+            </div>
+          ))}
+          <div style={{textAlign:"center",color:P.textMut,fontSize:"0.68rem",marginTop:"0.8rem"}}>
+            Select an object node to view its fields
+          </div>
+        </>
+      ):(
+        <>
+          <div style={{padding:"0.6rem 0.75rem",background:P.bgCard,borderRadius:"6px",
+            border:`2px solid ${P.accent}`,marginBottom:"0.75rem"}}>
+            <div style={{color:P.accent,fontWeight:800,fontSize:"0.82rem"}}>{obj.label}</div>
+            <div style={{color:P.textSec,fontSize:"0.67rem",marginTop:"0.2rem",
+              fontFamily:"Courier New,monospace",lineHeight:1.5}}>{obj.table}</div>
+          </div>
+          <div style={{color:P.textMut,fontSize:"0.62rem",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:"0.4rem",fontWeight:700}}>
+            {obj.attrs.length} Key Fields
+          </div>
+          {obj.attrs.map((a,i)=>{
+            const sp=a.indexOf("  ");
+            const field=sp>-1?a.slice(0,sp):a;
+            const desc=sp>-1?a.slice(sp).trim():"";
+            return(
+              <div key={i} style={{display:"flex",gap:"0.5rem",padding:"0.26rem 0",borderBottom:`1px solid ${P.border2}`}}>
+                <code style={{color:P.accent,fontSize:"0.68rem",minWidth:"58px",flexShrink:0,fontWeight:700}}>{field}</code>
+                <span style={{color:P.textSec,fontSize:"0.68rem",lineHeight:1.4}}>{desc}</span>
+              </div>
+            );
+          })}
+        </>
+      )}
+    </div>
+  );
+}
+
+function Reference(){
+  const [open,setOpen]=useState({});
+  const [openObj,setOpenObj]=useState({});
+  const [q,setQ]=useState("");
+  const sq=q.toLowerCase().trim();
+  const filtered=useMemo(()=>{
+    if(!sq)return DATA;
+    return Object.entries(DATA).reduce((acc,[k,mod])=>{
+      const objs=mod.objects.filter(o=>
+        o.label.toLowerCase().includes(sq)||
+        o.table.toLowerCase().includes(sq)||
+        o.attrs.some(a=>a.toLowerCase().includes(sq))
+      );
+      if(objs.length||mod.label.toLowerCase().includes(sq)||mod.full.toLowerCase().includes(sq)){
+        acc[k]={...mod,objects:objs.length?objs:mod.objects};
+      }
+      return acc;
+    },{});
+  },[sq]);
+
+  const totalObjs=Object.values(DATA).reduce((s,m)=>s+m.objects.length,0);
+  const totalFields=Object.values(DATA).reduce((s,m)=>s+m.objects.reduce((ss,o)=>ss+o.attrs.length,0),0);
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
+      <div style={{padding:"0.65rem 1rem",borderBottom:`2px solid ${P.border}`,background:P.bgDeep,
+        display:"flex",gap:"0.75rem",alignItems:"center"}}>
+        <input value={q} onChange={e=>setQ(e.target.value)}
+          placeholder="Search object types, table names, field names (e.g. MATNR, ACDOCA, Cost Center)..."
+          style={{flex:1,background:P.bgCard,border:`2px solid ${P.border}`,borderRadius:"5px",
+            padding:"0.42rem 0.75rem",color:P.textPri,fontSize:"0.78rem",outline:"none"}}/>
+        <span style={{color:P.textMut,fontSize:"0.65rem",whiteSpace:"nowrap"}}>
+          {totalObjs} objects · {totalFields} fields
+        </span>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"0.65rem"}}>
+        {Object.entries(filtered).map(([key,mod])=>(
+          <div key={key} style={{marginBottom:"0.55rem",border:`2px solid ${P.border}`,borderRadius:"7px",overflow:"hidden"}}>
+            <div onClick={()=>setOpen(p=>({...p,[key]:!p[key]}))}
+              style={{padding:"0.6rem 0.85rem",background:p=>p?P.accentLt:P.bgMid,cursor:"pointer",
+                display:"flex",alignItems:"center",gap:"0.7rem",userSelect:"none",
+                background:open[key]?P.accentLt:P.bgMid,
+                borderBottom:open[key]?`2px solid ${P.border}`:"none"}}>
+              <span style={{color:P.accent,fontWeight:800,fontSize:"0.82rem",minWidth:"46px",letterSpacing:"0.05em"}}>{mod.label}</span>
+              <span style={{color:P.textSec,fontSize:"0.73rem",flex:1,fontWeight:600}}>{mod.full}</span>
+              <span style={{color:P.textMut,fontSize:"0.65rem"}}>{mod.objects.length} objects</span>
+              <span style={{color:P.accent,fontSize:"0.72rem",marginLeft:"0.4rem",fontWeight:700}}>{open[key]?"▲":"▼"}</span>
+            </div>
+            {open[key]&&(
+              <div style={{padding:"0.4rem 0.5rem",background:P.bg}}>
+                {mod.objects.map(obj=>{
+                  const ok=`${key}-${obj.id}`;
+                  return(
+                    <div key={obj.id} style={{marginBottom:"0.3rem",border:`1px solid ${P.border}`,borderRadius:"5px",overflow:"hidden"}}>
+                      <div onClick={()=>setOpenObj(p=>({...p,[ok]:!p[ok]}))}
+                        style={{padding:"0.4rem 0.7rem",background:openObj[ok]?P.accentLt:P.bgCard,
+                          cursor:"pointer",display:"flex",alignItems:"center",userSelect:"none",
+                          borderLeft:`3px solid ${P.accentMd}`}}>
+                        <div style={{flex:1}}>
+                          <span style={{color:P.textPri,fontSize:"0.76rem",fontWeight:700}}>{obj.label}</span>
+                          <span style={{color:P.textMut,fontSize:"0.62rem",marginLeft:"0.5rem",
+                            fontFamily:"Courier New,monospace"}}>{obj.table}</span>
+                        </div>
+                        <span style={{color:P.textMut,fontSize:"0.62rem",marginRight:"0.4rem"}}>{obj.attrs.length} fields</span>
+                        <span style={{color:P.accent,fontSize:"0.65rem",fontWeight:700}}>{openObj[ok]?"▲":"▼"}</span>
+                      </div>
+                      {openObj[ok]&&(
+                        <div style={{padding:"0.4rem 0.75rem 0.5rem",background:P.bgCard}}>
+                          {obj.attrs.map((a,i)=>{
+                            const sp=a.indexOf("  ");
+                            const field=sp>-1?a.slice(0,sp):a;
+                            const desc=sp>-1?a.slice(sp).trim():"";
+                            const hi=sq&&a.toLowerCase().includes(sq);
+                            return(
+                              <div key={i} style={{display:"flex",gap:"0.5rem",padding:"0.23rem 0",
+                                borderBottom:`1px solid ${P.border2}`,
+                                background:hi?P.accentLt:"transparent",
+                                paddingLeft:hi?"0.3rem":"0"}}>
+                                <code style={{color:hi?P.accent:P.accentMd,fontSize:"0.67rem",
+                                  minWidth:"58px",flexShrink:0,fontWeight:hi?800:600}}>{field}</code>
+                                <span style={{color:hi?P.textPri:P.textSec,fontSize:"0.67rem",lineHeight:1.4}}>{desc}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ))}
+        {Object.keys(filtered).length===0&&(
+          <div style={{textAlign:"center",color:P.textMut,padding:"3rem",fontSize:"0.8rem"}}>
+            No results found for "{q}"
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function App(){
+  const [mode,setMode]=useState("map");
+  const [sm,setSm]=useState(null);
+  const [so,setSo]=useState(null);
+  const totalObjs=Object.values(DATA).reduce((s,m)=>s+m.objects.length,0);
+  const totalFields=Object.values(DATA).reduce((s,m)=>s+m.objects.reduce((ss,o)=>ss+o.attrs.length,0),0);
+  return(
+    <div style={{background:P.bg,height:"100vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{padding:"0.45rem 1.1rem",borderBottom:`2px solid ${P.border}`,display:"flex",
+        alignItems:"center",justifyContent:"space-between",flexShrink:0,background:P.bgDeep}}>
+        <div>
+          <div style={{fontWeight:800,fontSize:"0.9rem",color:P.textPri,letterSpacing:"0.03em"}}>
+            SAP S/4HANA Object Reference
+          </div>
+          <div style={{color:P.textSec,fontSize:"0.62rem",letterSpacing:"0.04em",marginTop:"0.1rem"}}>
+            ENPPI &nbsp;·&nbsp; {MOD_KEYS.length} Modules &nbsp;·&nbsp; {totalObjs} Object Types &nbsp;·&nbsp; {totalFields} Fields
+          </div>
+        </div>
+        <div style={{display:"flex",gap:"0.35rem"}}>
+          {[["map","Mind Map"],["ref","Reference"]].map(([m,lbl])=>(
+            <button key={m} onClick={()=>setMode(m)} style={{
+              padding:"0.28rem 0.8rem",borderRadius:"4px",fontSize:"0.72rem",fontWeight:700,
+              letterSpacing:"0.04em",
+              background:mode===m?P.accent:P.bgCard,
+              color:mode===m?P.bgCard:P.accent,
+              border:`2px solid ${mode===m?P.accent:P.border}`,
+            }}>{lbl}</button>
+          ))}
+        </div>
+      </div>
+      {mode==="map"?(
+        <div style={{display:"flex",flex:1,overflow:"hidden",minHeight:0}}>
+          <div style={{flex:"0 0 65%",overflow:"hidden"}}>
+            <MindMap sm={sm} setSm={setSm} so={so} setSo={setSo}/>
+          </div>
+          <div style={{flex:"0 0 35%",borderLeft:`2px solid ${P.border}`,overflow:"hidden"}}>
+            <Panel sm={sm} so={so}/>
+          </div>
+        </div>
+      ):(
+        <div style={{flex:1,overflow:"hidden",minHeight:0}}><Reference/></div>
+      )}
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
