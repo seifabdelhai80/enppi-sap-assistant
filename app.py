@@ -1,5 +1,6 @@
 import streamlit as st
 import anthropic
+import html
 import json
 import os
 import uuid
@@ -82,6 +83,16 @@ st.markdown("""
   }
   .msg-label-user { color: #2563eb; }
   .msg-label-assistant { color: #059669; }
+
+  .msg-label-row {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .copy-btn {
+    border: 1px solid #d1d5db; background: #f8fafc; color: #4b5563;
+    border-radius: 6px; padding: 0.15rem 0.55rem; font-size: 0.68rem;
+    font-weight: 600; cursor: pointer; line-height: 1.6;
+  }
+  .copy-btn:hover { background: #e2e8f0; color: #111827; }
 
   .welcome-card {
     background: #ffffff; border: 1px solid #d1d5db;
@@ -229,7 +240,7 @@ if not history:
     """, unsafe_allow_html=True)
 
 # Render history
-for msg in history:
+for i, msg in enumerate(history):
     if msg["role"] == "user":
         st.markdown(f"""
         <div class="msg-user">
@@ -237,7 +248,21 @@ for msg in history:
           {msg['content']}
         </div>""", unsafe_allow_html=True)
     else:
-        st.markdown('<div class="msg-assistant"><div class="msg-label msg-label-assistant">SAP Assistant</div></div>', unsafe_allow_html=True)
+        msg_id = f"copy_src_{st.session_state.active_mode}_{i}"
+        escaped = html.escape(msg["content"])
+        st.markdown(f"""
+        <div class="msg-assistant">
+          <div class="msg-label-row">
+            <div class="msg-label msg-label-assistant">SAP Assistant</div>
+            <button class="copy-btn" onclick="
+              navigator.clipboard.writeText(document.getElementById('{msg_id}').innerText);
+              this.innerText='Copied';
+              setTimeout(() => this.innerText='Copy', 1500);
+            ">Copy</button>
+          </div>
+        </div>
+        <pre id="{msg_id}" style="display:none;">{escaped}</pre>
+        """, unsafe_allow_html=True)
         st.markdown(msg["content"])
 
 # OData Quick Reference

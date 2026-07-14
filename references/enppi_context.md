@@ -9,7 +9,7 @@ the assistant. Fill in the sections below with your actual landscape details.
 
 - **Company**: ENPPI (Engineering for the Petroleum & Process Industries)
 - **Industry**: Oil & Gas EPC
-- **SAP Release**: S/4HANA 2022 On-Premise
+- **SAP Release**: S/4HANA 2023 On-Premise
 - **Company Code**: *(e.g. 1000)*
 - **Controlling Area**: *(e.g. 1000)*
 - **Plants**: *(e.g. 1001 – Cairo HQ, 1002 – Site)*
