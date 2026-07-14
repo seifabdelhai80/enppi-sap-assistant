@@ -187,21 +187,12 @@ with st.sidebar:
         _save_session(st.session_state.session_id)
         st.rerun()
 
-    if not st.session_state.api_key:
-        st.markdown("---")
-        st.markdown('<div class="sidebar-section">API Key</div>', unsafe_allow_html=True)
-        api_key_input = st.text_input(
-            "Anthropic API Key",
-            type="password",
-            placeholder="sk-ant-...",
-        )
-        if api_key_input:
-            st.session_state.api_key = api_key_input
-        st.caption("Or set ANTHROPIC_API_KEY as an environment variable or place it in a local .env file.")
-    else:
-        st.markdown("---")
-        st.markdown('<div class="sidebar-section">API Key</div>', unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown('<div class="sidebar-section">API Key</div>', unsafe_allow_html=True)
+    if st.session_state.api_key:
         st.markdown('<div style="color:#111827; font-size:0.9rem;">API key loaded automatically.</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div style="color:#b91c1c; font-size:0.85rem;">Not configured. Ask an administrator to set ANTHROPIC_API_KEY.</div>', unsafe_allow_html=True)
 
 api_key = st.session_state.api_key
 
@@ -279,7 +270,7 @@ if st.session_state.active_mode == "odata":
 
 # Input
 if not api_key:
-    st.warning("⚠️ Add your Anthropic API key in the sidebar to start chatting.", icon="🔑")
+    st.warning("⚠️ No API key configured for this deployment. Contact an administrator.", icon="🔑")
 
 user_input = st.chat_input(mode_cfg["placeholder"], disabled=not bool(api_key))
 
